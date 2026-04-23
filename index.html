@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏫 숲속 마을 학급운영 (배경 드래그하세요!) 🏫</title>
+    <style>
+        @font-face {
+            font-family: 'Pretendard-Regular';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+        }
+
+        :root {
+            --soft-pink: #ffeef2;
+            --main-pink: #ffc2d1;
+            --dark-pink: #ff85a1;
+            --cloud-white: rgba(255, 255, 255, 0.85); /* 반투명 레이어 */
+            --text-color: #5d4a4d;
+        }
+
+        body {
+            font-family: 'Pretendard-Regular', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            
+            /* 기본 배경색 (이미지 없을 때) */
+            background-color: var(--soft-pink);
+            
+            /* 배경 이미지 설정 (JS로 드래그 앤 드롭 시 변경됨) */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease; /* 부드러운 전환 */
+        }
+
+        /* 메인 콘텐츠를 감싸는 반투명 몽글몽글 레이어 */
+        .main-layer {
+            background: var(--cloud-white);
+            backdrop-filter: blur(5px);
+            border-radius: 30px;
+            padding: 30px;
+            border: 3px solid white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 1;
+            position: relative;
+        }
+
+        /* 드롭 존 안내 텍스트 */
+        .drop-zone-text {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 0.8em;
+            color: var(--dark-pink);
+            font-weight: bold;
+            pointer-events: none; /* 클릭 방지 */
+        }
+
+        /* 탭 스타일 */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid var(--main-pink);
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            padding: 12px 30px;
+            border-radius: 15px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-color);
+            transition: 0.3s;
+        }
+        .tab-btn:hover { background: #e0e0e0; }
+        .tab-btn.active {
+            background: var(--dark-pink);
+            color: white;
+        }
+
+        /* 레이아웃 */
+        .content-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 25px;
+        }
+
+        /* 카드 스타일 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            padding: 20px;
+            border: 2px solid var(--soft-pink);
+        }
+
+        /* 캘린더 */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .cal-day {
+            font-size: 0.8em; min-height: 50px; border-radius: 12px;
+            background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 1px solid #f0f0f0;
+        }
+        .cal-day.selected { background: var(--dark-pink); color: white; }
+        .cal-count { font-size: 9px; margin-top: 2px; }
+
+        /* 학생 리스트 */
+        .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .student-card { background: white; border-radius: 20px; padding: 15px; text-align: center; border: 2px solid var(--main-pink); position: relative; }
+        .name-tag { font-weight: bold; font-size: 1.1em; display: block; margin-bottom: 10px; }
+        
+        /* 출석 상태 버튼 */
+        .status-btn {
+            border: none; border-radius: 10px; padding: 6px; width: 100%; cursor: pointer; font-weight: bold; font-family: inherit;
+        }
+        
+        /* 누가기록 */
+        .log-area { width: 100%; height: 80px; border-radius: 10px; border: 1px solid var(--soft-pink); padding: 8px; font-size: 0.85em; resize: none; outline: none; margin-top: 10px; box-sizing: border-box;}
+
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 20px; border: 2px solid var(--main-pink); margin-bottom: 15px; box-sizing: border-box; outline: none; text-align: center; font-family: inherit; }
+        .save-btn { width: 100%; padding: 15px; background: var(--dark-pink); color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 1em; font-family: inherit; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="main-layer" id="drop-zone">
+    <div class="drop-zone-text">📸 이미지를 여기에 드래그하여 배경으로 설정하세요!</div>
+    
+    <header style="text-align: center;">
+        <h1 style="margin: 0 0 10px 0; color: var(--dark-pink);">🏫 숲속 마을 학급운영 🏫</h1>
+    </header>
+
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchTab('attendance')">🎒 출석부</button>
+        <button class="tab-btn" onclick="switchTab('logs')">📝 누가기록</button>
+    </div>
+
+    <div id="tab-attendance" class="content-layout">
+        <div class="sidebar">
+            <div class="glass-card">
+                <div id="month-label" style="text-align: center; font-weight: bold; margin-bottom: 10px; color: var(--dark-pink);"></div>
+                <div class="calendar-grid" id="calendar-body"></div>
+            </div>
+            <div class="glass-card" style="margin-top: 15px;">
+                <div style="font-weight: bold; margin-bottom: 10px; color: var(--dark-pink);">✅ 오늘의 할 일</div>
+                <input type="text" id="todo-in" placeholder="할 일 입력 (Enter)" style="padding:8px; margin-bottom:10px; font-size:0.9em;" onkeypress="if(event.keyCode==13) addTodo()">
+                <div id="todo-list" style="font-size:0.9em;"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="glass-card">
+                <div id="date-badge" style="background:var(--dark-pink); color:white; display:inline-block; padding:5px 15px; border-radius:20px; font-weight:bold; margin-bottom:15px;"></div>
+                <input type="text" id="name-in" placeholder="새 학생 이름 입력 (Enter)" onkeypress="if(event.keyCode==13) addStudent()">
+                <div class="student-grid" id="attendance-list"></div>
+                <button class="save-btn" onclick="saveAttendance()">☁️ 이 날짜 출석 기록 저장하기 ☁️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-logs" class="main-content hidden">
+        <div class="glass-card">
+            <div style="font-weight: bold; margin-bottom: 15px; color: var(--dark-pink); font-size: 1.2em; text-align: center;">📝 학생별 누가기록 관리 📝</div>
+            <div class="student-grid" id="logs-list"></div>
+            <button class="save-btn" onclick="saveLogs()">☁️ 모든 누가기록 저장하기 ☁️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 드래그 앤 드롭 배경 설정 로직
+    const dropZone = document.getElementById('drop-zone');
+    const body = document.body;
+
+    // 로컬 스토리지에서 저장된 배경 이미지 불러오기
+    const savedBg = localStorage.getItem('class_bg_image');
+    if (savedBg) {
+        body.style.backgroundImage = `url(${savedBg})`;
+    }
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault(); // 기본 동작(파일 열기) 방지
+        dropZone.style.borderColor = 'var(--dark-pink)'; // 피드백
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = 'white'; // 피드백 원복
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'white';
+        const file = e.dataTransfer.files[0];
+
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imageDataUrl = event.target.result;
+                body.style.backgroundImage = `url(${imageDataUrl})`;
+                localStorage.setItem('class_bg_image', imageDataUrl); // 로컬 스토리지에 저장
+                alert('배경 이미지가 설정되었습니다! 📸');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert('이미지 파일만 드롭해 주세요!');
+        }
+    });
+
+    // --- 학급 운영 로직 ---
+    let masterStudents = JSON.parse(localStorage.getItem('master_students')) || [];
+    let dailyRecords = JSON.parse(localStorage.getItem('daily_records')) || {};
+    let studentLogs = JSON.parse(localStorage.getItem('student_logs')) || {}; // { "이름": "기록내용" }
+    let todos = JSON.parse(localStorage.getItem('cloud_todos')) || [];
+    let selectedDate = new Date().toISOString().split('T')[0];
+
+    function init() {
+        renderCalendar();
+        renderAttendance();
+        renderLogs();
+        renderTodos();
+        document.getElementById('date-badge').innerText = `📅 ${selectedDate}`;
+    }
+
+    // 탭 전환
+    function switchTab(tab) {
+        document.getElementById('tab-attendance').classList.toggle('hidden', tab !== 'attendance');
+        document.getElementById('tab-logs').classList.toggle('hidden', tab !== 'logs');
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            const isAttendanceTab = btn.innerText.includes('출석부');
+            btn.classList.toggle('active', (tab === 'attendance' && isAttendanceTab) || (tab === 'logs' && !isAttendanceTab));
+        });
+    }
+
+    /* --- 출석부 로직 --- */
+    function renderCalendar() {
+        const now = new Date();
+        const year = now.getFullYear(); const month = now.getMonth();
+        document.getElementById('month-label').innerText = `${year}년 ${month + 1}월`;
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const calBody = document.getElementById('calendar-body');
+        calBody.innerHTML = '';
+        
+        for (let i = 0; i < firstDay; i++) calBody.innerHTML += '<div></div>';
+        
+        for (let d = 1; d <= lastDate; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isSelected = selectedDate === dateStr;
+            let pCount = dailyRecords[dateStr] ? dailyRecords[dateStr].filter(s => s.status === 'present').length : "";
+            
+            const dayEl = document.createElement('div');
+            dayEl.className = `cal-day ${isSelected ? 'selected' : ''}`;
+            dayEl.innerHTML = `<span>${d}</span><span class="cal-count">${pCount ? '출석:'+pCount : ''}</span>`;
+            dayEl.onclick = () => { 
+                selectedDate = dateStr; 
+                document.getElementById('date-badge').innerText = `📅 ${selectedDate}`; 
+                renderCalendar(); 
+                renderAttendance(); 
+            };
+            calBody.appendChild(dayEl);
+        }
+    }
+
+    function renderAttendance() {
+        const list = document.getElementById('attendance-list');
+        list.innerHTML = '';
+        // 해당 날짜 기록 가져오기 (없으면 기본 명단으로 생성)
+        let data = dailyRecords[selectedDate] || masterStudents.map(name => ({ name, status: 'present', note: '' }));
+        
+        data.forEach((s, i) => {
+            const card = document.createElement('div');
+            card.className = 'student-card';
+            
+            // 상태별 스타일/텍스트 설정
+            let statusText = '✅ 출석';
+            let statusBg = '#e0f9ec'; // 초록
+            if (s.status === 'absent') { statusText = '❌ 결석'; statusBg = '#ffebeb'; } // 빨강
+            if (s.status === 'late') { statusText = '🕒 지각'; statusBg = '#fff5d1'; } // 노랑
+
+            card.innerHTML = `
+                <button onclick="removeStudent(${i})" style="position:absolute; top:3px; right:6px; border:none; background:none; color:#eee; cursor:pointer; font-size:0.8em;">✕</button>
+                <span class="name-tag">🏫 ${s.name}</span>
+                <button class="status-btn" style="background:${statusBg};" onclick="toggleStatus(${i})">
+                    ${statusText}
+                </button>
+                <input type="text" class="reason-box" style="display:${s.status==='present'?'none':'block'}; margin:8px 0 0 0; padding:6px; font-size:0.8em; border-radius:10px;" placeholder="사유 입력" value="${s.note || ''}" oninput="updateNote(${i}, this.value)">
+            `;
+            list.appendChild(card);
+        });
+        window.currentAttendanceData = data; // 임시 저장
+    }
+
+    function toggleStatus(i) {
+        const s = window.currentAttendanceData[i];
+        if (s.status === 'present') s.status = 'absent';
+        else if (s.status === 'absent') s.status = 'late';
+        else s.status = 'present';
+        renderAttendance();
+    }
+    
+    function updateNote(i, val) { window.currentAttendanceData[i].note = val; }
+
+    function addStudent() {
+        const input = document.getElementById('name-in');
+        const name = input.value.trim();
+        if (name && !masterStudents.includes(name)) {
+            masterStudents.push(name);
+            localStorage.setItem('master_students', JSON.stringify(masterStudents));
+            input.value = '';
+            renderAttendance(); renderLogs();
+        }
+    }
+    
+    function removeStudent(i) {
+        if(confirm('이 학생을 삭제할까요?')) {
+            const name = window.currentAttendanceData[i].name;
+            masterStudents = masterStudents.filter(n => n !== name); // 마스터 명단에서 제거
+            localStorage.setItem('master_students', JSON.stringify(masterStudents));
+            renderAttendance(); renderLogs();
+        }
+    }
+
+    function saveAttendance() {
+        dailyRecords[selectedDate] = window.currentAttendanceData;
+        localStorage.setItem('daily_records', JSON.stringify(dailyRecords));
+        alert(`${selectedDate} 출석 기록이 저장되었습니다! 🍃`);
+        renderCalendar();
+    }
+
+    /* --- 누가기록 로직 --- */
+    function renderLogs() {
+        const list = document.getElementById('logs-list');
+        list.innerHTML = '';
+        masterStudents.forEach(name => {
+            const card = document.createElement('div');
+            card.className = 'student-card';
+            card.innerHTML = `
+                <span class="name-tag">🏫 ${name}</span>
+                <textarea class="log-area" placeholder="성장 기록을 적어주세요..." oninput="updateLog('${name}', this.value)">${studentLogs[name] || ''}</textarea>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function updateLog(name, val) { studentLogs[name] = val; }
+    function saveLogs() { localStorage.setItem('student_logs', JSON.stringify(studentLogs)); alert('모든 누가기록이 저장되었습니다! 📝'); }
+
+    /* --- 할 일 로직 --- */
+    function renderTodos() {
+        const div = document.getElementById('todo-list');
+        div.innerHTML = todos.map((t, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>- ${t}</span><span style="cursor:pointer; color:#ccc;" onclick="deleteTodo(${i})">✕</span></div>`).join('');
+        localStorage.setItem('cloud_todos', JSON.stringify(todos));
+    }
+    function addTodo() { const inp = document.getElementById('todo-in'); if(inp.value.trim()) { todos.push(inp.value.trim()); inp.value=''; renderTodos(); } }
+    function deleteTodo(i) { todos.splice(i, 1); renderTodos(); }
+
+    init();
+</script>
+
+</body>
+</html>
