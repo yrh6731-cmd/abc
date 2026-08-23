@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☕ Warm Cafe - Dynamic Category OrderGather</title>
+    <style>
+        :root {
+            --bg-color: #f7f3ed;
+            --card-bg: #ffffff;
+            --accent-color: #7b5232;
+            --accent-hover: #5d3d23;
+            --border-color: #e4d8cb;
+            --highlight: #fcf8f3;
+            --text-main: #3d332a;
+            --text-sub: #786a5d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 24px 16px;
+            max-width: 1000px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px 20px;
+            border-bottom: 2px dashed var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            font-size: 2.1rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .full-width {
+                grid-column: span 2;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 22px;
+            border-radius: 18px;
+            box-shadow: 0 4px 20px rgba(123, 82, 50, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            font-size: 1.18rem;
+            color: var(--accent-color);
+            margin-bottom: 14px;
+            font-weight: 700;
+        }
+
+        textarea,
+        input,
+        select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.92rem;
+            color: var(--text-main);
+            background-color: #fff;
+        }
+
+        textarea:focus,
+        input:focus,
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-danger {
+            background-color: #e06d53;
+            color: white;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background-color: #c9543a;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 카테고리 태그 및 메뉴 관리 */
+        .cat-tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .cat-tag {
+            background-color: #f1e7dc;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cat-tag .action-btn {
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 2px;
+        }
+
+        .cat-tag .edit-btn {
+            color: var(--accent-color);
+        }
+
+        .cat-tag .remove-btn {
+            color: #e06d53;
+            font-weight: bold;
+        }
+
+        .menu-cat-group {
+            margin-bottom: 14px;
+        }
+
+        .menu-cat-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+
+        .menu-tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .menu-tag {
+            background-color: var(--highlight);
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .menu-tag .remove-btn {
+            color: #e06d53;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* 테이블 */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: var(--highlight);
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .cat-select-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .cat-select-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cat-label {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: var(--accent-color);
+            min-width: 70px;
+        }
+
+        /* 요약 */
+        .summary-group {
+            margin-bottom: 14px;
+        }
+
+        .summary-group-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+
+        .summary-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .summary-card {
+            background-color: var(--highlight);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.88rem;
+        }
+
+        .summary-card span {
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-left: 4px;
+        }
+
+        .summary-card.total-card {
+            background-color: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+        }
+
+        .summary-card.total-card span {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>☕ Warm Cafe OrderGather</h1>
+        <p>카테고리를 직접 추가/수정하고 1인당 여러 카테고리의 메뉴를 선택해 보세요!</p>
+    </header>
+
+    <div class="container">
+
+        <!-- 1. 카테고리 관리 -->
+        <div class="card full-width">
+            <h2>📂 카테고리 관리</h2>
+            <div class="input-group" style="max-width: 500px;">
+                <input type="text" id="newCatInput" placeholder="새 카테고리 이름 (예: 커피, 디저트, 사이드)">
+                <button class="btn" style="margin: 0; min-width: 110px;" onclick="addCategory()">카테고리 추가</button>
+            </div>
+            <div id="catTagsContainer" class="cat-tag-container"></div>
+        </div>
+
+        <!-- 2. 명단 일괄 입력 -->
+        <div class="card">
+            <h2>👥 명단 일괄 등록</h2>
+            <textarea id="bulkNames" placeholder="김철수&#10;이영희&#10;박민수"></textarea>
+            <button class="btn" onclick="addBulkNames()">명단 추가하기</button>
+        </div>
+
+        <!-- 3. 카테고리별 메뉴 설정 -->
+        <div class="card">
+            <h2>📜 메뉴 관리</h2>
+            <div class="input-group">
+                <select id="newCategorySelect" style="width: 40%;"></select>
+                <input type="text" id="newMenuInput" placeholder="메뉴명" style="width: 60%;">
+            </div>
+            <button class="btn" style="width: 100%;" onclick="addMenu()">메뉴 추가하기</button>
+
+            <div id="menuTagsContainer" style="margin-top: 14px;"></div>
+        </div>
+
+        <!-- 4. 개별 인원 추가 -->
+        <div class="card full-width">
+            <h2>➕ 개별 인원 추가</h2>
+            <div class="input-group">
+                <input type="text" id="singleNameInput" placeholder="이름 입력 (예: 홍길동)">
+                <button class="btn" style="margin: 0; min-width: 100px;" onclick="addSingleName()">인원 추가</button>
+            </div>
+        </div>
+
+        <!-- 5. 주문 현황 테이블 -->
+        <div class="card full-width">
+            <h2>📋 주문 수합 현황</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">이름</th>
+                            <th style="width: 68%;">카테고리별 메뉴 선택</th>
+                            <th style="width: 12%; text-align: center;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. 최종 집계 -->
+        <div class="card full-width">
+            <h2>📊 카테고리별 최종 주문 집계</h2>
+            <div id="summaryContainer"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let categories = ['커피', '음료', '디저트'];
+
+        let menuList = [
+            { category: '커피', name: '아이스 아메리카노' },
+            { category: '커피', name: '아이스 카페라떼' },
+            { category: '음료', name: '자몽 에이드' },
+            { category: '디저트', name: '치즈 케이크' },
+            { category: '디저트', name: '플레인 스콘' }
+        ];
+
+        let members = [];
+
+        window.onload = function () {
+            renderCategories();
+            renderMenus();
+            renderOrders();
+        };
+
+        // 1. 카테고리 관리 기능
+        function renderCategories() {
+            const container = document.getElementById('catTagsContainer');
+            const select = document.getElementById('newCategorySelect');
+
+            container.innerHTML = '';
+            select.innerHTML = '';
+
+            if (categories.length === 0) {
+                container.innerHTML = '<span style="color: var(--text-sub); font-size: 0.88rem;">등록된 카테고리가 없습니다.</span>';
+                select.innerHTML = '<option value="">(카테고리 없음)</option>';
+                return;
+            }
+
+            categories.forEach((cat, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'cat-tag';
+                tag.innerHTML = `
+          ${cat}
+          <span class="action-btn edit-btn" onclick="editCategory(${index})" title="이름 수정">✏️</span>
+          <span class="action-btn remove-btn" onclick="removeCategory(${index})" title="카테고리 삭제">✕</span>
+        `;
+                container.appendChild(tag);
+
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                select.appendChild(opt);
+            });
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCatInput');
+            const name = input.value.trim();
+
+            if (!name) return alert('카테고리 이름을 입력해 주세요.');
+            if (categories.includes(name)) return alert('이미 존재하는 카테고리입니다.');
+
+            categories.push(name);
+            input.value = '';
+            renderCategories();
+            renderMenus();
+        }
+
+        function editCategory(index) {
+            const oldName = categories[index];
+            const newName = prompt('수정할 카테고리 이름을 입력하세요:', oldName);
+
+            if (newName === null) return;
+            const trimmed = newName.trim();
+            if (!trimmed) return alert('카테고리 이름을 입력해야 합니다.');
+            if (trimmed !== oldName && categories.includes(trimmed)) return alert('이미 존재하는 카테고리 이름입니다.');
+
+            categories[index] = trimmed;
+
+            menuList.forEach(m => {
+                if (m.category === oldName) m.category = trimmed;
+            });
+            members.forEach(m => {
+                if (m.selections[oldName]) {
+                    m.selections[trimmed] = m.selections[oldName];
+                    delete m.selections[oldName];
+                }
+            });
+
+            renderCategories();
+            renderMenus();
+        }
+
+        function removeCategory(index) {
+            const targetCat = categories[index];
+            if (!confirm(`'${targetCat}' 카테고리를 삭제하시겠습니까?\n해당 카테고리의 메뉴 및 선택 항목도 함께 삭제됩니다.`)) return;
+
+            categories.splice(index, 1);
+            menuList = menuList.filter(m => m.category !== targetCat);
+            members.forEach(m => {
+                delete m.selections[targetCat];
+            });
+
+            renderCategories();
+            renderMenus();
+        }
+
+        // 2. 메뉴 관리 기능
+        function renderMenus() {
+            const container = document.getElementById('menuTagsContainer');
+            container.innerHTML = '';
+
+            categories.forEach(cat => {
+                const catMenus = menuList.filter(m => m.category === cat);
+                if (catMenus.length > 0) {
+                    const catGroup = document.createElement('div');
+                    catGroup.className = 'menu-cat-group';
+
+                    let html = `<div class="menu-cat-title">📁 ${cat}</div><div class="menu-tag-container">`;
+
+                    catMenus.forEach(item => {
+                        const index = menuList.findIndex(m => m.category === item.category && m.name === item.name);
+                        html += `
+              <span class="menu-tag">
+                ${item.name}
+                <span class="remove-btn" onclick="removeMenu(${index})">✕</span>
+              </span>
+            `;
+                    });
+                    html += `</div>`;
+                    catGroup.innerHTML = html;
+                    container.appendChild(catGroup);
+                }
+            });
+
+            renderOrders();
+        }
+
+        function addMenu() {
+            const catSelect = document.getElementById('newCategorySelect');
+            const nameInput = document.getElementById('newMenuInput');
+            const category = catSelect.value;
+            const name = nameInput.value.trim();
+
+            if (!category) return alert('카테고리를 먼저 등록해 주세요.');
+            if (!name) return alert('메뉴 이름을 입력해 주세요.');
+            if (menuList.some(m => m.category === category && m.name === name)) {
+                return alert('이미 존재하는 메뉴입니다.');
+            }
+
+            menuList.push({ category, name });
+            nameInput.value = '';
+            renderMenus();
+        }
+
+        function removeMenu(index) {
+            const target = menuList[index];
+            members.forEach(m => {
+                if (m.selections[target.category] === target.name) {
+                    delete m.selections[target.category];
+                }
+            });
+            menuList.splice(index, 1);
+            renderMenus();
+        }
+
+        // 3. 인원 관리 기능
+        function addBulkNames() {
+            const textarea = document.getElementById('bulkNames');
+            const text = textarea.value.trim();
+            if (!text) return;
+
+            const nameList = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+            nameList.forEach(name => {
+                members.push({
+                    id: Date.now() + Math.random(),
+                    name: name,
+                    selections: {}
+                });
+            });
+
+            textarea.value = '';
+            renderOrders();
+        }
+
+        function addSingleName() {
+            const input = document.getElementById('singleNameInput');
+            const name = input.value.trim();
+            if (name) {
+                members.push({
+                    id: Date.now() + Math.random(),
+                    name: name,
+                    selections: {}
+                });
+                input.value = '';
+                renderOrders();
+            }
+        }
+
+        function removeMember(id) {
+            members = members.filter(m => m.id !== id);
+            renderOrders();
+        }
+
+        function updateMemberCategoryMenu(id, category, selectedMenu) {
+            const member = members.find(m => m.id === id);
+            if (member) {
+                if (selectedMenu) {
+                    member.selections[category] = selectedMenu;
+                } else {
+                    delete member.selections[category];
+                }
+                renderSummary();
+            }
+        }
+
+        // 4. 테이블 렌더링
+        function renderOrders() {
+            const tbody = document.getElementById('orderTableBody');
+            tbody.innerHTML = '';
+
+            if (members.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-sub); padding: 20px;">등록된 인원이 없습니다. 명단을 등록해 주세요!</td></tr>`;
+                renderSummary();
+                return;
+            }
+
+            members.forEach(member => {
+                const tr = document.createElement('tr');
+
+                let selectCellHtml = `<div class="cat-select-cell">`;
+
+                if (categories.length === 0) {
+                    selectCellHtml += `<span style="color:var(--text-sub); font-size:0.85rem;">카테고리를 먼저 생성해 주세요.</span>`;
+                } else {
+                    categories.forEach(cat => {
+                        const catMenus = menuList.filter(m => m.category === cat);
+                        let currentVal = member.selections[cat] || '';
+
+                        selectCellHtml += `
+              <div class="cat-select-row">
+                <span class="cat-label">${cat}</span>
+                <select onchange="updateMemberCategoryMenu(${member.id}, '${cat}', this.value)" ${catMenus.length === 0 ? 'disabled' : ''}>
+                  <option value="">${catMenus.length === 0 ? '(등록된 메뉴 없음)' : '선택 안 함'}</option>
+            `;
+
+                        catMenus.forEach(item => {
+                            const selected = currentVal === item.name ? 'selected' : '';
+                            selectCellHtml += `<option value="${item.name}" ${selected}>${item.name}</option>`;
+                        });
+
+                        selectCellHtml += `</select></div>`;
+                    });
+                }
+
+                selectCellHtml += `</div>`;
+
+                tr.innerHTML = `
+          <td><strong>${member.name}</strong></td>
+          <td>${selectCellHtml}</td>
+          <td style="text-align: center;">
+            <button class="btn-danger" onclick="removeMember(${member.id})">삭제</button>
+          </td>
+        `;
+                tbody.appendChild(tr);
+            });
+
+            renderSummary();
+        }
+
+        // 5. 최종 집계 렌더링
+        function renderSummary() {
+            const container = document.getElementById('summaryContainer');
+            container.innerHTML = '';
+
+            const counts = {};
+            let grandTotal = 0;
+
+            members.forEach(m => {
+                Object.values(m.selections).forEach(menuName => {
+                    if (menuName) {
+                        counts[menuName] = (counts[menuName] || 0) + 1;
+                        grandTotal++;
+                    }
+                });
+            });
+
+            if (grandTotal === 0) {
+                container.innerHTML = `<div style="color: var(--text-sub); font-size: 0.9rem;">아직 선택된 메뉴가 없습니다.</div>`;
+                return;
+            }
+
+            categories.forEach(cat => {
+                const catMenus = menuList.filter(m => m.category === cat);
+                const catItemsWithCount = [];
+
+                catMenus.forEach(m => {
+                    if (counts[m.name]) {
+                        catItemsWithCount.push({ name: m.name, count: counts[m.name] });
+                    }
+                });
+
+                if (catItemsWithCount.length > 0) {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'summary-group';
+
+                    let catTotal = catItemsWithCount.reduce((acc, cur) => acc + cur.count, 0);
+
+                    let html = `<div class="summary-group-title">📁 ${cat} (소계: ${catTotal}개)</div><ul class="summary-list">`;
+                    catItemsWithCount.forEach(item => {
+                        html += `<li class="summary-card">${item.name}: <span>${item.count}개</span></li>`;
+                    });
+                    html += `</ul>`;
+
+                    groupDiv.innerHTML = html;
+                    container.appendChild(groupDiv);
+                }
+            });
+
+            const totalDiv = document.createElement('div');
+            totalDiv.style.marginTop = '14px';
+            totalDiv.innerHTML = `
+        <div class="summary-card total-card" style="display: inline-block; font-size: 0.95rem; padding: 8px 18px;">
+          🎉 전체 주문 수량: <span>총 ${grandTotal}개</span>
+        </div>
+      `;
+            container.appendChild(totalDiv);
+        }
+    </script>
+</body>
+
+</html>
